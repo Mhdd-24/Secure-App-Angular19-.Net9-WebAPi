@@ -7,16 +7,13 @@ import { environment } from '../../environment/environment';
 import { jwtDecode } from 'jwt-decode';
 import { RegisterRequest } from '../interfaces/register-request';
 import { UserDetail } from '../interfaces/user-detail';
-
 @Injectable({
   providedIn: 'root',
 })
 export class AuthService {
   apiUrl: string = environment.apiUrl;
   private tokenKey = 'token';
-
   constructor(private http: HttpClient) {}
-
   login(data: LoginRequest): Observable<AuthResponse> {
     return this.http
       .post<AuthResponse>(`${this.apiUrl}account/login`, data)
@@ -29,15 +26,12 @@ export class AuthService {
         })
       );
   }
-
   register(data: RegisterRequest): Observable<AuthResponse> {
     return this.http
       .post<AuthResponse>(`${this.apiUrl}account/register`, data);
   }
-
   getDetail = (): Observable<UserDetail> => 
     this.http.get<UserDetail>(`${this.apiUrl}account/detail`);
-
   getUserDetail = () => {
     const token = this.getToken();
     if (!token) return null;
@@ -48,16 +42,13 @@ export class AuthService {
       email: decodedToken.email,
       roles: decodedToken.role || [],
     };
-
     return userDetail;
   };
-
   isLoggedIn = (): boolean => {
     const token = this.getToken();
     if (!token) return false;
     return !this.isTokenExpired();
   };
-
   private isTokenExpired() {
     const token = this.getToken();
     if (!token) return true;
@@ -66,10 +57,15 @@ export class AuthService {
     if (isTokenExpired) this.logout();
     return isTokenExpired;
   }
-
+  getRoles = (): string[] | null => {
+    const token = this.getToken();
+    if (!token) return null;
+    const decodedToken: any = jwtDecode(token);
+    return decodedToken.role || [];
+  }
   logout = (): void => {
     localStorage.removeItem(this.tokenKey);
   };
-
-   getToken = (): string | null => localStorage.getItem(this.tokenKey) || '';
+  getAll = (): Observable<UserDetail[]> => this.http.get<UserDetail[]>(`${this.apiUrl}account`);
+  getToken = (): string | null => localStorage.getItem(this.tokenKey) || '';
 }

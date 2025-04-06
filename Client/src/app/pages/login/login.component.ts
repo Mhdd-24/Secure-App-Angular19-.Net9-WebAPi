@@ -10,7 +10,6 @@ import { MatInputModule } from '@angular/material/input';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
-
 @Component({
   selector: 'app-login',
   standalone: true,
@@ -31,12 +30,11 @@ export class LoginComponent implements OnInit {
   hide = true;
   form!: FormGroup;
   fb = inject(FormBuilder);
-
   login() {
     this.authService.login(this.form.value).subscribe({
       next: (response) => {
+        console.log(response);
         this.matSnackBar.open(response.message, 'Close', {
-          duration: 5000,
           horizontalPosition: 'center',
         });
         this.router.navigate(['/']);
@@ -49,7 +47,6 @@ export class LoginComponent implements OnInit {
       },
     });
   }
-
   ngOnInit(): void {
     this.form = this.fb.group({
       email: ['', [Validators.required, Validators.email]],
