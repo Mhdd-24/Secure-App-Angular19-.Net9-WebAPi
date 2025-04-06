@@ -1,0 +1,29 @@
+# Angular build output
+/dist
+/tmp
+/out-tsc
+/.angular
+
+# Node dependencies
+/node_modules
+
+# Environment files
+/src/environments/*.ts
+!src/environments/environment.prod.ts
+
+# IDE / editor folders
+.vscode
+.idea
+
+# System files
+.DS_Store
+Thumbs.db
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Optional for VS Code users
+.env
+.env.local
