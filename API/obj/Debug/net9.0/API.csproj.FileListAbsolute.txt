@@ -169,3 +169,4 @@
 /Users/mhdd24/Desktop/Details/Mohammed Rafi/Practice Project/JWTAuth/API/obj/Debug/net9.0/API.genruntimeconfig.cache
 /Users/mhdd24/Desktop/Details/Mohammed Rafi/Practice Project/JWTAuth/API/obj/Debug/net9.0/ref/API.dll
 /Users/mhdd24/Desktop/Details/Mohammed Rafi/Practice Project/JWTAuth/API/obj/Debug/net9.0/API.sourcelink.json
+/Users/mhdd24/Desktop/Details/Mohammed Rafi/Practice Project/JWTAuth/API/bin/Debug/net9.0/RestSharp.dll

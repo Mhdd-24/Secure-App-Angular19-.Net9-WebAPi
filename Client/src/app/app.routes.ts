@@ -30,7 +30,7 @@ export const routes: Routes = [
     component: UsersComponent,
     canActivate: [roleGuard],
     data: {
-      roles: ['Admin'],
+      roles: ['test'],
     }
   },
   {
@@ -38,7 +38,7 @@ export const routes: Routes = [
     component: RoleComponent,
     canActivate: [roleGuard],
     data: {
-      roles: ['Admin'],
+      roles: ['test'],
     }
   },
 ];
