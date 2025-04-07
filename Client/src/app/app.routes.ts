@@ -7,6 +7,8 @@ import { authGuard } from './guard/auth.guard';
 import { UsersComponent } from './pages/users/users.component';
 import { roleGuard } from './guard/role.guard';
 import { RoleComponent } from './pages/role/role.component';
+import { ForgetPasswordComponent } from './pages/forget-password/forget-password.component';
+import { ResetPasswordComponent } from './pages/reset-password/reset-password.component';
 export const routes: Routes = [
   {
     path: '',
@@ -19,6 +21,14 @@ export const routes: Routes = [
   {
     path: 'register',
     component: RegisterComponent,
+  },
+  {
+    path: 'forget-password',
+    component: ForgetPasswordComponent,
+  },
+  {
+    path: 'reset-password',
+    component: ResetPasswordComponent,
   },
   {
     path: 'account/:id',

@@ -27,11 +27,16 @@ export class AuthService {
       );
   }
   register(data: RegisterRequest): Observable<AuthResponse> {
-    return this.http
-      .post<AuthResponse>(`${this.apiUrl}account/register`, data);
+    return this.http.post<AuthResponse>(`${this.apiUrl}account/register`, data);
   }
-  getDetail = (): Observable<UserDetail> => 
+  getDetail = (): Observable<UserDetail> =>
     this.http.get<UserDetail>(`${this.apiUrl}account/detail`);
+  forgotPassword(email: string): Observable<AuthResponse> {
+    return this.http.post<AuthResponse>(
+      `${this.apiUrl}account/forgot-password`,
+      { email }
+    );
+  }
   getUserDetail = () => {
     const token = this.getToken();
     if (!token) return null;
@@ -62,10 +67,11 @@ export class AuthService {
     if (!token) return null;
     const decodedToken: any = jwtDecode(token);
     return decodedToken.role || [];
-  }
+  };
   logout = (): void => {
     localStorage.removeItem(this.tokenKey);
   };
-  getAll = (): Observable<UserDetail[]> => this.http.get<UserDetail[]>(`${this.apiUrl}account`);
+  getAll = (): Observable<UserDetail[]> =>
+    this.http.get<UserDetail[]>(`${this.apiUrl}account`);
   getToken = (): string | null => localStorage.getItem(this.tokenKey) || '';
 }
