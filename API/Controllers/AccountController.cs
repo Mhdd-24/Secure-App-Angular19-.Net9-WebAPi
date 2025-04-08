@@ -1,6 +1,7 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Net;
 using System.Security.Claims;
+using System.Security.Cryptography;
 using System.Text;
 using API.Dtos;
 using API.Models;
@@ -94,13 +95,80 @@ namespace API.Controllers
                 });
             }
             var token = GenerateToken(user);
+            var refreshToken = GenerateRefreshToken();
+            _ = int.TryParse(_configuration.GetSection("JWTSetting").GetSection("RefreshTokenValidityIn").Value!, out int RefreshTokenValidityIn);
+            user.RefreshToken = refreshToken;
+            user.RefreshTokenExpiryTime = DateTime.UtcNow.AddMinutes(RefreshTokenValidityIn).ToString("o"); // ISO 8601 format
+
+            await _userManager.UpdateAsync(user);
+
+
             return Ok(new AuthResponseDto
             {
                 Token = token,
                 IsSuccess = true,
-                Message = "Login Success."
+                Message = "Login Success.",
+                RefreshToken = refreshToken
             });
         }
+
+        [AllowAnonymous]
+        [HttpPost("refresh-token")]
+        public async Task<ActionResult<AuthResponseDto>> RefreshToken(TokenDto tokenDto)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            var principal = GetPrincipalFromExpiredToken(tokenDto.Token);
+            var user = await _userManager.FindByIdAsync(tokenDto.Email);
+            if (principal == null || user == null || user.RefreshToken != tokenDto.RefreshToken || !DateTime.TryParse(user.RefreshTokenExpiryTime, out var expiryTime) || expiryTime <= DateTime.UtcNow)
+            {
+                return BadRequest(new AuthResponseDto
+                {
+                    IsSuccess = false,
+                    Message = "Invalid Client Token"
+                });
+            }
+            var newJwtToken = GenerateToken(user);
+            var newRefreshToken = GenerateRefreshToken();
+            _ = int.TryParse(_configuration.GetSection("JWTSetting").GetSection("RefreshTokenValidityIn").Value!, out int RefreshTokenValidityIn);
+            user.RefreshToken = newRefreshToken;
+            user.RefreshTokenExpiryTime = DateTime.UtcNow.AddMinutes(RefreshTokenValidityIn).ToString("o"); // ISO 8601 format
+            await _userManager.UpdateAsync(user);
+            return Ok(new AuthResponseDto
+            {
+                Token = newJwtToken,
+                IsSuccess = true,
+                Message = "Token refreshed successfully",
+                RefreshToken = newRefreshToken
+            });
+
+        }
+
+        private ClaimsPrincipal GetPrincipalFromExpiredToken(string token)
+        {
+
+            var validationParameters = new TokenValidationParameters
+            {
+                ValidateAudience = false,
+                ValidateIssuer = false,
+                ValidateIssuerSigningKey = true,
+                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration.GetSection("JwtSetting").GetSection("securityKey").Value!)),
+                ValidateLifetime = false,
+
+            };
+
+            var tokenHandler = new JwtSecurityTokenHandler();
+            var principal = tokenHandler.ValidateToken(token, validationParameters, out SecurityToken securityToken);
+
+            if (securityToken is not JwtSecurityToken jwtSecurityToken || !jwtSecurityToken.Header.Alg.Equals(SecurityAlgorithms.HmacSha256, StringComparison.InvariantCultureIgnoreCase))
+                throw new SecurityTokenException("Invalid token");
+            return principal;
+
+        }
+
         [AllowAnonymous]
         [HttpPost("forgot-password")]
         public async Task<ActionResult> ForgotPassword(ForgotPasswordDto forgotPasswordDto)
@@ -119,14 +187,16 @@ namespace API.Controllers
 
             // using RestSharp;
 
+            // var client = new RestClient("https://sandbox.api.mailtrap.io/api/send/3593884");
             // var request = new RestRequest();
-            // request.AddHeader("Authorization", "Bearer 818edb48d469fefafe22e50bc7c561c1");
+            // request.AddHeader("Authorization", "Bearer a8473ae7c467e470f0da45213ea43167");
             // request.AddHeader("Content-Type", "application/json");
             // request.AddParameter("application/json", "{\"from\":{\"email\":\"hello@demomailtrap.co\",\"name\":\"Mailtrap Test\"},\"to\":[{\"email\":\"mhdd24.project@gmail.com\"}],\"template_uuid\":\"8d81cbc8-6b82-4211-88c0-3e5e2ab7b2cd\",\"template_variables\":{\"user_email\":\"Test_User_email\",\"pass_reset_link\":\"Test_Pass_reset_link\"}}", ParameterType.RequestBody);
             // var response = client.Post(request);
             // System.Console.WriteLine(response.Content);
 
-            var client = new RestClient("https://send.api.mailtrap.io/api/send");
+
+            var client = new RestClient("https://sandbox.api.mailtrap.io/api/send/3593884");
 
 
             var request = new RestRequest
@@ -134,11 +204,11 @@ namespace API.Controllers
                 Method = Method.Post,
                 RequestFormat = DataFormat.Json,
             };
-            request.AddHeader("Authorization", "Bearer 818edb48d469fefafe22e50bc7c561c1");
+            request.AddHeader("Authorization", "Bearer a8473ae7c467e470f0da45213ea43167");
             request.AddJsonBody(new
-            {   
-                from = new {email = "mailtrap@demomailtrap.com"},
-                to = new[] { new {email = user.Email}}, 
+            {
+                from = new { email = "mailtrap@demomailtrap.com" },
+                to = new[] { new { email = user.Email } },
                 template_uuid = "8d81cbc8-6b82-4211-88c0-3e5e2ab7b2cd",
                 template_variables = new
                 {
@@ -167,6 +237,75 @@ namespace API.Controllers
                 });
             }
         }
+
+        [AllowAnonymous]
+        [HttpPost("reset-password")]
+        public async Task<IActionResult> ResetPassword(ResetPasswordDto resetPasswordDto)
+        {
+            var user = await _userManager.FindByEmailAsync(resetPasswordDto.Email);
+            // resetPasswordDto.Token = WebUtility.UrlDecode(resetPasswordDto.Token);
+            if (user is null)
+            {
+                return BadRequest(new AuthResponseDto
+                {
+                    IsSuccess = false,
+                    Message = "User doesnot exist with this email"
+                });
+            }
+            var result = await _userManager.ResetPasswordAsync(user, resetPasswordDto.Token, resetPasswordDto.NewPassword);
+            if (!result.Succeeded)
+            {
+                return Ok(new AuthResponseDto
+                {
+                    IsSuccess = true,
+                    Message = "Password reset successfully."
+                });
+            }
+            return BadRequest(new AuthResponseDto
+            {
+                IsSuccess = false,
+                Message = result.Errors.FirstOrDefault()?.Description
+            });
+        }
+
+
+        [HttpPost("change-password")]
+        public async Task<ActionResult> ChangePassword(ChangePasswordDto changePasswordDto)
+        {
+            var user = await _userManager.FindByIdAsync(changePasswordDto.Email);
+            if (user is null)
+            {
+                return BadRequest(new AuthResponseDto
+                {
+                    IsSuccess = false,
+                    Message = "User doesnot exist with this email"
+                });
+            }
+            var result = await _userManager.ChangePasswordAsync(user, changePasswordDto.CurrentPassword, changePasswordDto.NewPassword);
+            if (!result.Succeeded)
+            {
+                return Ok(new AuthResponseDto
+                {
+                    IsSuccess = true,
+                    Message = "Password changed successfully."
+                });
+            }
+
+            return BadRequest(new AuthResponseDto
+            {
+                IsSuccess = false,
+                Message = result.Errors.FirstOrDefault()!.Description
+            });
+        }
+
+        private string GenerateRefreshToken()
+        {
+            var randomNumber = new byte[32];
+            using var rng = RandomNumberGenerator.Create();
+            rng.GetBytes(randomNumber);
+            return Convert.ToBase64String(randomNumber);
+        }
+
         private string GenerateToken(AppUser user)
         {
             var tokenHandler = new JwtSecurityTokenHandler();
@@ -189,7 +328,7 @@ namespace API.Controllers
             var tokenDescriptor = new SecurityTokenDescriptor
             {
                 Subject = new ClaimsIdentity(claims),
-                Expires = DateTime.UtcNow.AddDays(1),
+                Expires = DateTime.UtcNow.AddMinutes(1),
                 SigningCredentials = new SigningCredentials(
                     new SymmetricSecurityKey(key),
                     SecurityAlgorithms.HmacSha256
