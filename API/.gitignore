@@ -27,3 +27,5 @@ yarn-error.log*
 # Optional for VS Code users
 .env
 .env.local
+
+/obj
