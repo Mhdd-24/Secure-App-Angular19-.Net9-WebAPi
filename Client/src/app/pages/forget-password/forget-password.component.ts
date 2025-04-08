@@ -1,4 +1,4 @@
-import { Component, Inject } from '@angular/core';
+import { Component, inject, Inject } from '@angular/core';
 import {  FormsModule } from '@angular/forms';
 import { AuthService } from '../../services/auth.service';
 import { MatSnackBar } from '@angular/material/snack-bar';
@@ -14,15 +14,17 @@ import { MatIconModule } from '@angular/material/icon';
 })
 export class ForgetPasswordComponent {
   email!: string;
-  authService = Inject(AuthService);
-  matSnackBar = Inject(MatSnackBar);
+  authService = inject(AuthService);
+  matSnackBar = inject(MatSnackBar);
   showEmailSent = false;
   isSubmitting = false;
 
   forgotPassword() {
     this.isSubmitting = true;
     this.authService.forgotPassword(this.email).subscribe({
-      next:(response:any) => {
+      next:(response) => {
+        console.log(response);
+        
         if (response.isSuccess) {
           this.matSnackBar.open(response.message, 'Close', {
             duration: 3000,

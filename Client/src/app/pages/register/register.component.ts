@@ -60,6 +60,7 @@ export class RegisterComponent {
     );
     this.roles$ = this.roleService.getRoles();
   }
+  
   register() {
     this.authService.register(this.registerForm.value).subscribe({
       next: (response) => {

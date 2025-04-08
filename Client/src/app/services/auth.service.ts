@@ -29,14 +29,14 @@ export class AuthService {
   register(data: RegisterRequest): Observable<AuthResponse> {
     return this.http.post<AuthResponse>(`${this.apiUrl}account/register`, data);
   }
+
   getDetail = (): Observable<UserDetail> =>
     this.http.get<UserDetail>(`${this.apiUrl}account/detail`);
-  forgotPassword(email: string): Observable<AuthResponse> {
-    return this.http.post<AuthResponse>(
-      `${this.apiUrl}account/forgot-password`,
-      { email }
-    );
-  }
+
+  forgotPassword = (email: string): Observable<AuthResponse> => 
+    this.http.post<AuthResponse>(  `${this.apiUrl}/account/forgot-password`, { email }  );
+  
+
   getUserDetail = () => {
     const token = this.getToken();
     if (!token) return null;
