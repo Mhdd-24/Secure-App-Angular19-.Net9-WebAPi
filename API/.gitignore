@@ -1,31 +1,20 @@
-# Angular build output
-/dist
-/tmp
-/out-tsc
-/.angular
+# Build output
+bin/
+obj/
 
-# Node dependencies
-/node_modules
+# User-specific files
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
 
-# Environment files
-/src/environments/*.ts
-!src/environments/environment.prod.ts
+# Database files
+*.db
+*.db-shm
+*.db-wal
 
-# IDE / editor folders
-.vscode
-.idea
+# VS Code settings
+.vscode/
 
-# System files
-.DS_Store
-Thumbs.db
-
-# Logs
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-
-# Optional for VS Code users
-.env
-.env.local
-
-/obj
+# Dependency directories
+node_modules/
